@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>雪の京都旅 (完整版)</title>
+    <title>雪の京都旅</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
@@ -32,25 +32,26 @@
         body { background-color: #F0F4F8; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .ios-shadow { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        /* Modal 動畫 */
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
+        .ios-shadow { box-shadow: 0 2px 10px rgba(0,0,0,0.06); } /* 陰影變小 */
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
-        .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.3s ease-out; }
+        .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.2s ease-out; }
         .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
     </style>
 </head>
-<body class="text-gray-700 font-sans h-screen flex justify-center bg-gray-100 overflow-hidden">
+<body class="text-gray-700 font-sans h-screen flex justify-center bg-gray-200 overflow-hidden">
 
     <div id="app" class="w-full max-w-md h-full bg-kyoto-paper relative shadow-2xl overflow-hidden flex flex-col">
         
-        <header class="bg-kyoto-wood text-white px-5 py-4 flex justify-between items-center shadow-md z-20 shrink-0">
-            <div v-if="currentView !== 'home'" @click="currentView = 'home'" class="cursor-pointer w-16 text-sm">
+        <header class="bg-kyoto-wood text-white px-4 py-3 flex justify-between items-center shadow-md z-20 shrink-0 h-14">
+            <div v-if="currentView !== 'home'" @click="currentView = 'home'" class="cursor-pointer w-16 text-sm flex items-center">
                 <i class="fa-solid fa-chevron-left mr-1"></i>返回
             </div>
-            <div v-else class="w-16"></div>
+            <div v-else class="w-16">
+                <button @click="showSettings = true" class="text-white/70 hover:text-white"><i class="fa-solid fa-gear"></i></button>
+            </div>
 
-            <h1 class="font-serif text-lg tracking-widest font-bold truncate max-w-[50%]">{{ currentTitle }}</h1>
+            <h1 class="font-serif text-base tracking-widest font-bold truncate max-w-[50%]">{{ currentTitle }}</h1>
             
             <div class="w-16 text-right">
                 <button v-if="currentView === 'home'" @click="openTripModal(null)" class="text-white hover:text-gray-300">
@@ -62,217 +63,206 @@
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto no-scrollbar relative">
+        <main class="flex-1 overflow-y-auto no-scrollbar relative bg-kyoto-paper">
             
-            <div v-if="currentView === 'home'" class="p-6 space-y-6">
-                <div class="text-center py-4">
-                    <p class="text-kyoto-wood font-serif text-xl mb-1">旅の記録</p>
-                    <p class="text-gray-400 text-xs tracking-widest uppercase">My Travel Collections</p>
-                </div>
-
+            <div v-if="currentView === 'home'" class="p-4 space-y-3">
+                
                 <div v-for="trip in trips" :key="trip.id" class="relative group">
-                    <button @click.stop="openTripModal(trip)" class="absolute top-2 right-2 z-10 bg-white/90 w-8 h-8 rounded-full shadow text-gray-500 hover:text-kyoto-red flex items-center justify-center">
-                        <i class="fa-solid fa-pen text-xs"></i>
+                    <button @click.stop="openTripModal(trip)" class="absolute top-2 right-2 z-10 bg-white/90 w-7 h-7 rounded-full shadow text-gray-500 hover:text-kyoto-red flex items-center justify-center">
+                        <i class="fa-solid fa-pen text-[10px]"></i>
                     </button>
-                    <div @click="openTrip(trip)" class="bg-white rounded-2xl p-0 ios-shadow transform transition active:scale-95 cursor-pointer overflow-hidden">
-                        <div class="h-24 bg-gradient-to-r from-snow-blue to-white relative">
-                            <div class="absolute top-3 left-3 bg-white/80 backdrop-blur px-2 py-1 rounded-lg text-xs font-bold text-kyoto-indigo shadow-sm">
-                                <i class="fa-regular fa-calendar mr-1"></i> {{ trip.dateRange }}
-                            </div>
-                            <i class="fa-solid fa-mountain-sun absolute bottom-0 right-4 text-6xl text-blue-100/50"></i>
+                    <div @click="openTrip(trip)" class="bg-white rounded-xl p-0 ios-shadow transform transition active:scale-98 cursor-pointer overflow-hidden flex h-24">
+                        <div class="w-24 bg-gradient-to-br from-snow-blue to-white relative shrink-0 flex items-center justify-center">
+                             <i class="fa-solid fa-mountain-sun text-4xl text-blue-100"></i>
                         </div>
-                        <div class="p-5 border-l-4 border-kyoto-red">
-                            <h2 class="text-xl font-bold text-kyoto-wood mb-1">{{ trip.name }}</h2>
-                            <p class="text-sm text-gray-500"><i class="fa-solid fa-location-dot mr-1"></i> {{ trip.location }}</p>
+                        <div class="p-3 flex-1 flex flex-col justify-center border-r-4 border-kyoto-red">
+                            <div class="flex justify-between items-start mb-1">
+                                <h2 class="text-base font-bold text-kyoto-wood leading-tight">{{ trip.name }}</h2>
+                                <span class="text-[10px] bg-gray-100 px-1 rounded text-gray-500">{{ trip.days.length }}天</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-1"><i class="fa-solid fa-location-dot mr-1"></i>{{ trip.location }}</p>
+                            <p class="text-[10px] text-gray-400"><i class="fa-regular fa-calendar mr-1"></i>{{ trip.dateRange }}</p>
                         </div>
                     </div>
                 </div>
 
-                <div v-if="trips.length === 0" @click="openTripModal(null)" class="border-2 border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-400 cursor-pointer hover:bg-gray-50">
-                    <i class="fa-solid fa-plus text-2xl mb-2"></i>
-                    <p>建立第一個旅程</p>
+                <div v-if="trips.length === 0" @click="openTripModal(null)" class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center text-gray-400 cursor-pointer hover:bg-gray-50">
+                    <i class="fa-solid fa-plus text-xl mb-1"></i>
+                    <p class="text-sm">建立第一個旅程</p>
                 </div>
             </div>
 
-            <div v-else class="pb-24">
-                
-                <div v-if="activeTab === 'schedule'" class="p-0">
-                    <div class="flex overflow-x-auto no-scrollbar bg-white shadow-sm sticky top-0 z-10">
+            <div v-else class="pb-20"> <div v-if="activeTab === 'schedule'" class="p-0">
+                    <div class="flex overflow-x-auto no-scrollbar bg-white shadow-sm sticky top-0 z-10 h-10 border-b border-gray-100">
                         <button v-for="(day, index) in activeTrip.days" :key="index"
                                 @click="currentDayIndex = index"
-                                class="flex-shrink-0 px-6 py-3 text-sm font-bold border-b-2 transition-colors whitespace-nowrap"
-                                :class="currentDayIndex === index ? 'border-kyoto-red text-kyoto-red' : 'border-transparent text-gray-400'">
-                            Day {{ index + 1 }} <br><span class="text-[10px] font-normal">{{ day.date }}</span>
+                                class="flex-shrink-0 px-4 h-full text-xs font-bold border-b-2 transition-colors whitespace-nowrap flex items-center"
+                                :class="currentDayIndex === index ? 'border-kyoto-red text-kyoto-red bg-red-50/30' : 'border-transparent text-gray-400'">
+                            {{ day.date }}
                         </button>
-                        <button @click="addDay" class="flex-shrink-0 px-4 py-3 text-gray-300 hover:text-kyoto-wood">
-                            <i class="fa-solid fa-plus"></i>
+                        <button @click="addDay" class="flex-shrink-0 px-3 h-full text-gray-300 hover:text-kyoto-wood text-xs bg-gray-50 border-l border-gray-100">
+                            <i class="fa-solid fa-plus"></i> Day
                         </button>
                     </div>
 
-                    <div class="bg-snow-blue/30 px-5 py-3 flex items-center justify-between text-kyoto-indigo">
-                        <div class="flex items-center">
-                            <i class="fa-solid fa-sun text-yellow-500 mr-2"></i>
-                            <span class="text-sm font-bold">預報: 晴朗</span>
-                        </div>
-                        <span class="text-lg font-light">5°C</span>
-                    </div>
-
-                    <div class="px-5 py-6">
-                        <div class="relative border-l-2 border-gray-200 ml-3 space-y-6 pl-6 py-2">
+                    <div class="px-3 py-3">
+                        <div class="relative border-l-2 border-gray-200 ml-2 space-y-3 pl-4 py-1">
                             <div v-for="(item, idx) in currentDaySchedule" :key="idx" class="relative group">
-                                <div class="absolute -left-[2.05rem] bg-white border-2 border-kyoto-wood h-4 w-4 rounded-full mt-1.5"></div>
-                                <div @click="openEditModal(item, idx, 'schedule')" class="bg-white p-4 rounded-xl ios-shadow cursor-pointer hover:bg-gray-50 relative">
-                                    <div class="absolute top-2 right-2 text-gray-300"><i class="fa-solid fa-ellipsis"></i></div>
+                                <div class="absolute -left-[1.4rem] bg-white border-2 border-kyoto-wood h-3 w-3 rounded-full mt-2"></div>
+                                <div @click="openEditModal(item, idx, 'schedule')" class="bg-white p-3 rounded-lg ios-shadow cursor-pointer hover:bg-gray-50 relative">
                                     <div class="flex items-center mb-1">
-                                        <span class="text-kyoto-red font-bold text-sm bg-red-50 px-2 py-0.5 rounded mr-2">{{ item.time }}</span>
+                                        <span class="text-kyoto-red font-bold text-xs bg-red-50 px-1.5 py-0.5 rounded mr-2">{{ item.time }}</span>
+                                        <h4 class="font-bold text-gray-800 text-sm truncate">{{ item.activity }}</h4>
                                     </div>
-                                    <h4 class="font-bold text-gray-800 text-lg">{{ item.activity }}</h4>
-                                    <div class="mt-2 text-sm text-gray-500 space-y-1">
-                                        <p v-if="item.location"><i class="fa-solid fa-map-pin mr-1 w-4"></i>{{ item.location }}</p>
-                                        <p v-if="item.note" class="text-gray-400"><i class="fa-regular fa-note-sticky mr-1 w-4"></i>{{ item.note }}</p>
+                                    <div class="text-[11px] text-gray-500 flex flex-wrap gap-2">
+                                        <span v-if="item.location" class="flex items-center"><i class="fa-solid fa-map-pin mr-1 text-gray-300"></i>{{ item.location }}</span>
+                                        <span v-if="item.note" class="text-gray-400 flex items-center"><i class="fa-regular fa-note-sticky mr-1"></i>{{ item.note }}</span>
                                     </div>
                                 </div>
                             </div>
-                            <div v-if="!currentDaySchedule || currentDaySchedule.length === 0" class="text-center text-gray-400 py-10">
-                                <p>這天還沒有行程</p>
-                                <p class="text-xs mt-2">點擊右上角 + 新增</p>
+                            <div v-if="!currentDaySchedule || currentDaySchedule.length === 0" class="text-center text-gray-400 py-6 text-xs">
+                                無行程 (點右上角+)
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div v-if="activeTab === 'map'" class="p-5">
-                    <h3 class="text-xl font-serif text-kyoto-wood mb-4 font-bold">地點清單</h3>
-                    <div class="space-y-3">
-                        <div v-for="(place, idx) in activeTrip.places" :key="idx" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
-                            <div>
-                                <h4 class="font-bold text-gray-800">{{ place.name }}</h4>
-                                <p class="text-xs text-gray-500 mt-1">{{ place.address }}</p>
-                            </div>
-                            <div class="flex space-x-3">
-                                <a :href="'https://www.google.com/maps/search/?api=1&query=' + place.name" target="_blank" class="w-8 h-8 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center">
-                                    <i class="fa-solid fa-location-arrow"></i>
-                                </a>
-                                <button @click="deleteItem('places', idx)" class="text-gray-300 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
-                            </div>
+                <div v-if="activeTab === 'map'" class="p-3 space-y-2">
+                    <div v-for="(place, idx) in activeTrip.places" :key="idx" class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center">
+                        <div class="overflow-hidden mr-2">
+                            <h4 class="font-bold text-gray-800 text-sm truncate">{{ place.name }}</h4>
+                            <p class="text-[10px] text-gray-500 truncate">{{ place.address }}</p>
                         </div>
-                         <div v-if="!activeTrip.places || activeTrip.places.length === 0" class="text-center text-gray-400 mt-10">
-                            無儲存地點
+                        <div class="flex space-x-2 shrink-0">
+                            <a :href="'https://www.google.com/maps/search/?api=1&query=' + place.name" target="_blank" class="w-7 h-7 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-location-arrow"></i>
+                            </a>
+                            <button @click="deleteItem('places', idx)" class="w-7 h-7 text-gray-300 hover:text-red-400 text-xs"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
                 </div>
                 
-                <div v-if="activeTab === 'budget'" class="p-5">
-                    <div class="bg-kyoto-wood text-white rounded-2xl p-6 mb-6 ios-shadow relative overflow-hidden">
-                        <div class="absolute -right-6 -top-6 w-32 h-32 bg-white opacity-10 rounded-full"></div>
-                        <p class="text-sm opacity-80 mb-1">總支出 Total</p>
-                        <h2 class="text-4xl font-serif">¥ {{ totalExpense.toLocaleString() }}</h2>
+                <div v-if="activeTab === 'budget'" class="p-3">
+                    <div class="bg-kyoto-wood text-white rounded-xl p-4 mb-3 ios-shadow flex justify-between items-end">
+                        <div>
+                            <p class="text-[10px] opacity-80 mb-0">總支出 Total</p>
+                            <h2 class="text-2xl font-serif">¥ {{ totalExpense.toLocaleString() }}</h2>
+                        </div>
+                        <i class="fa-solid fa-yen-sign text-4xl opacity-10"></i>
                     </div>
 
-                    <div class="space-y-3">
-                        <div v-for="(item, idx) in activeTrip.expenses" :key="idx" class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center mr-3 shrink-0">
-                                    <i class="fa-solid fa-tag"></i>
-                                </div>
-                                <div>
-                                    <p class="font-bold text-gray-700">{{ item.name }}</p>
-                                </div>
+                    <div class="space-y-2">
+                        <div v-for="(item, idx) in activeTrip.expenses" :key="idx" class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                            <p class="font-bold text-gray-700 text-sm">{{ item.name }}</p>
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono font-bold text-gray-800 text-sm">-¥{{ item.amount }}</span>
+                                <button @click="deleteItem('expenses', idx)" class="text-gray-300 text-[10px] hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
                             </div>
-                            <div class="flex items-center gap-3">
-                                <span class="font-mono font-bold text-gray-800">-¥{{ item.amount }}</span>
-                                <button @click="deleteItem('expenses', idx)" class="text-gray-300 text-xs hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </div>
-                         <div v-if="!activeTrip.expenses || activeTrip.expenses.length === 0" class="text-center text-gray-400 mt-10">
-                            無記帳資料
                         </div>
                     </div>
                 </div>
 
-                <div v-if="activeTab === 'shopping'" class="p-5">
-                    <h3 class="text-xl font-serif text-kyoto-wood mb-4 font-bold">購物清單</h3>
-                    <div class="space-y-3">
-                        <div v-for="(item, idx) in activeTrip.shopping" :key="idx" 
-                             class="flex items-center bg-white p-4 rounded-xl shadow-sm cursor-pointer transition-all"
-                             :class="{'opacity-50 grayscale': item.checked}">
-                            <div @click="item.checked = !item.checked" class="w-6 h-6 rounded border-2 mr-4 flex items-center justify-center transition-colors shrink-0"
-                                 :class="item.checked ? 'bg-kyoto-red border-kyoto-red' : 'border-gray-300'">
-                                <i v-if="item.checked" class="fa-solid fa-check text-white text-xs"></i>
-                            </div>
-                            <div class="flex-1" @click="item.checked = !item.checked">
-                                <p class="font-bold" :class="{'line-through text-gray-400': item.checked}">{{ item.name }}</p>
-                                <p class="text-xs text-gray-500" v-if="item.note">{{ item.note }}</p>
-                            </div>
-                            <button @click="deleteItem('shopping', idx)" class="text-gray-300 px-2"><i class="fa-solid fa-trash"></i></button>
+                <div v-if="activeTab === 'shopping'" class="p-3 space-y-2">
+                    <div v-for="(item, idx) in activeTrip.shopping" :key="idx" 
+                         class="flex items-center bg-white p-3 rounded-lg shadow-sm cursor-pointer"
+                         :class="{'opacity-50 grayscale': item.checked}">
+                        <div @click="item.checked = !item.checked" class="w-5 h-5 rounded border-2 mr-3 flex items-center justify-center shrink-0"
+                             :class="item.checked ? 'bg-kyoto-red border-kyoto-red' : 'border-gray-300'">
+                            <i v-if="item.checked" class="fa-solid fa-check text-white text-[10px]"></i>
                         </div>
-                        <div v-if="!activeTrip.shopping || activeTrip.shopping.length === 0" class="text-center text-gray-400 mt-10">
-                            清單是空的
+                        <div class="flex-1 overflow-hidden" @click="item.checked = !item.checked">
+                            <p class="font-bold text-sm truncate" :class="{'line-through text-gray-400': item.checked}">{{ item.name }}</p>
+                            <p class="text-[10px] text-gray-500 truncate" v-if="item.note">{{ item.note }}</p>
                         </div>
+                        <button @click="deleteItem('shopping', idx)" class="text-gray-300 px-2 text-xs"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
             </div>
         </main>
 
-        <nav v-if="currentView === 'trip-detail'" class="bg-white border-t border-gray-100 flex justify-around items-center pb-6 pt-3 shrink-0 z-30">
+        <nav v-if="currentView === 'trip-detail'" class="bg-white border-t border-gray-200 flex justify-around items-center h-14 shrink-0 z-30 pb-safe">
             <button v-for="tab in ['schedule', 'map', 'budget', 'shopping']" 
                     @click="activeTab = tab" 
                     :class="activeTab === tab ? 'text-kyoto-red' : 'text-gray-400'" 
-                    class="flex flex-col items-center w-16 transition-colors">
-                <i :class="getIcon(tab)" class="text-xl mb-1"></i>
-                <span class="text-[10px] font-bold capitalize">{{ getTabName(tab) }}</span>
+                    class="flex flex-col items-center w-16 transition-colors pt-1">
+                <i :class="getIcon(tab)" class="text-lg mb-0.5"></i>
+                <span class="text-[9px] font-bold capitalize">{{ getTabName(tab) }}</span>
             </button>
         </nav>
 
         <transition name="fade">
-            <div v-if="modals.trip" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="modals.trip = false">
-                <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-slide-up">
-                    <h3 class="text-xl font-serif font-bold text-kyoto-wood mb-4">旅程設定</h3>
-                    <div class="space-y-4">
-                        <input v-model="tempData.name" type="text" class="w-full border-b border-gray-300 py-2 focus:border-kyoto-red outline-none" placeholder="旅程名稱">
-                        <input v-model="tempData.location" type="text" class="w-full border-b border-gray-300 py-2 focus:border-kyoto-red outline-none" placeholder="主要地點">
-                        <input v-model="tempData.dateRange" type="text" class="w-full border-b border-gray-300 py-2 focus:border-kyoto-red outline-none" placeholder="日期範圍">
+            <div v-if="modals.trip" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" @click.self="modals.trip = false">
+                <div class="bg-white w-full max-w-xs rounded-xl p-5 shadow-2xl animate-slide-up">
+                    <h3 class="text-lg font-serif font-bold text-kyoto-wood mb-3">旅程設定</h3>
+                    <div class="space-y-3 text-sm">
+                        <input v-model="tempData.name" type="text" class="w-full border-b border-gray-300 py-1.5 focus:border-kyoto-red outline-none" placeholder="旅程名稱">
+                        <input v-model="tempData.location" type="text" class="w-full border-b border-gray-300 py-1.5 focus:border-kyoto-red outline-none" placeholder="主要地點">
+                        <input v-model="tempData.dateRange" type="text" class="w-full border-b border-gray-300 py-1.5 focus:border-kyoto-red outline-none" placeholder="日期範圍">
                     </div>
-                    <div class="mt-6 flex justify-end gap-3">
-                        <button v-if="tempData.id" @click="deleteTrip" class="text-red-400 mr-auto text-sm font-bold">刪除</button>
-                        <button @click="saveTrip" class="bg-kyoto-wood text-white px-6 py-2 rounded-xl font-bold">儲存</button>
+                    <div class="mt-5 flex justify-end gap-3">
+                        <button v-if="tempData.id" @click="deleteTrip" class="text-red-400 mr-auto text-xs font-bold">刪除</button>
+                        <button @click="saveTrip" class="bg-kyoto-wood text-white px-5 py-1.5 rounded-lg text-sm font-bold">儲存</button>
                     </div>
                 </div>
             </div>
         </transition>
 
         <transition name="fade">
-            <div v-if="modals.item" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center sm:p-4" @click.self="closeItemModal">
-                <div class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up">
-                    <h3 class="text-xl font-serif font-bold text-kyoto-wood mb-4">{{ modalTitle }}</h3>
+            <div v-if="modals.item" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center sm:p-4" @click.self="closeItemModal">
+                <div class="bg-white w-full sm:max-w-xs rounded-t-2xl sm:rounded-xl p-5 shadow-2xl animate-slide-up pb-8 sm:pb-5">
+                    <h3 class="text-lg font-serif font-bold text-kyoto-wood mb-3">{{ modalTitle }}</h3>
                     
-                    <div v-if="activeTab === 'schedule'" class="space-y-4">
-                        <div class="flex gap-4">
-                            <input v-model="tempData.time" type="time" class="w-1/3 border-b border-gray-300 py-2 outline-none">
-                            <input v-model="tempData.activity" type="text" class="flex-1 border-b border-gray-300 py-2 outline-none" placeholder="活動名稱">
+                    <div v-if="activeTab === 'schedule'" class="space-y-3 text-sm">
+                        <div class="flex gap-3">
+                            <input v-model="tempData.time" type="time" class="w-1/3 border-b border-gray-300 py-1.5 outline-none">
+                            <input v-model="tempData.activity" type="text" class="flex-1 border-b border-gray-300 py-1.5 outline-none" placeholder="活動名稱">
                         </div>
-                        <input v-model="tempData.location" type="text" class="w-full border-b border-gray-300 py-2 outline-none" placeholder="地點">
-                        <textarea v-model="tempData.note" rows="2" class="w-full border border-gray-200 rounded p-2 text-sm" placeholder="備註"></textarea>
+                        <input v-model="tempData.location" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="地點">
+                        <input v-model="tempData.note" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="備註">
                     </div>
 
-                    <div v-if="activeTab === 'map'" class="space-y-4">
-                        <input v-model="tempData.name" type="text" class="w-full border-b border-gray-300 py-2 outline-none" placeholder="地點名稱">
-                        <input v-model="tempData.address" type="text" class="w-full border-b border-gray-300 py-2 outline-none" placeholder="地址或備註">
+                    <div v-if="activeTab === 'map'" class="space-y-3 text-sm">
+                        <input v-model="tempData.name" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="地點名稱">
+                        <input v-model="tempData.address" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="地址或備註">
                     </div>
 
-                    <div v-if="activeTab === 'budget'" class="space-y-4">
-                        <input v-model="tempData.name" type="text" class="w-full border-b border-gray-300 py-2 outline-none" placeholder="項目名稱">
-                        <input v-model.number="tempData.amount" type="number" class="w-full border-b border-gray-300 py-2 outline-none" placeholder="金額 (¥)">
+                    <div v-if="activeTab === 'budget'" class="space-y-3 text-sm">
+                        <input v-model="tempData.name" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="項目名稱">
+                        <input v-model.number="tempData.amount" type="number" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="金額 (¥)">
                     </div>
 
-                    <div v-if="activeTab === 'shopping'" class="space-y-4">
-                        <input v-model="tempData.name" type="text" class="w-full border-b border-gray-300 py-2 outline-none" placeholder="物品名稱">
-                        <input v-model="tempData.note" type="text" class="w-full border-b border-gray-300 py-2 outline-none" placeholder="在哪買/備註">
+                    <div v-if="activeTab === 'shopping'" class="space-y-3 text-sm">
+                        <input v-model="tempData.name" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="物品名稱">
+                        <input v-model="tempData.note" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="在哪買/備註">
                     </div>
 
-                    <div class="mt-6 flex justify-end gap-3">
-                        <button v-if="isEditingItem" @click="deleteCurrentItem" class="text-red-400 mr-auto text-sm font-bold">刪除</button>
-                        <button @click="saveItem" class="bg-kyoto-wood text-white px-6 py-2 rounded-xl font-bold">儲存</button>
+                    <div class="mt-5 flex justify-end gap-3">
+                        <button v-if="isEditingItem" @click="deleteCurrentItem" class="text-red-400 mr-auto text-xs font-bold">刪除</button>
+                        <button @click="saveItem" class="bg-kyoto-wood text-white px-5 py-1.5 rounded-lg text-sm font-bold">儲存</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <transition name="fade">
+            <div v-if="showSettings" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" @click.self="showSettings = false">
+                <div class="bg-white w-full max-w-xs rounded-xl p-5 shadow-2xl">
+                    <h3 class="text-lg font-bold text-kyoto-wood mb-4">資料備份</h3>
+                    <p class="text-xs text-gray-500 mb-4">資料目前自動存在此瀏覽器中。若要換裝置，請使用匯出功能。</p>
+                    
+                    <button @click="exportData" class="w-full bg-snow-blue text-kyoto-indigo py-2 rounded-lg text-sm font-bold mb-3">
+                        <i class="fa-solid fa-download mr-2"></i>匯出備份檔 (JSON)
+                    </button>
+                    
+                    <div class="relative">
+                        <button class="w-full border border-gray-300 text-gray-600 py-2 rounded-lg text-sm font-bold">
+                            <i class="fa-solid fa-upload mr-2"></i>匯入備份檔
+                        </button>
+                        <input type="file" @change="importData" class="absolute inset-0 opacity-0 cursor-pointer">
+                    </div>
+                    
+                    <div class="mt-4 text-center">
+                         <button @click="showSettings = false" class="text-gray-400 text-xs">關閉</button>
                     </div>
                 </div>
             </div>
@@ -290,39 +280,44 @@
                     activeTab: 'schedule',
                     activeTrip: null,
                     currentDayIndex: 0,
+                    showSettings: false, // 設定視窗
                     
                     modals: { trip: false, item: false },
                     tempData: {},
                     isEditingItem: false,
                     editIndex: -1,
 
-                    // 假資料結構：注意 schedule 現在是在 days 陣列裡面
+                    // 預設資料 (若沒有存檔會顯示這個)
                     trips: [
                         {
                             id: 1,
-                            name: '京都跨年',
+                            name: '範例旅程',
                             location: 'Kyoto',
-                            dateRange: '2025/12/31 - 01/02',
-                            places: [{name:'清水寺', address:'京都府京都市東山區清水1丁目294'}],
-                            expenses: [{name:'晚餐', amount: 5000}],
-                            shopping: [{name:'抹茶', note:'中村藤吉', checked: false}],
-                            days: [
-                                {
-                                    date: '12/31',
-                                    schedule: [
-                                        { time: '09:00', activity: '抵達關西機場', location: 'KIX', note: '搭乘 Haruka' },
-                                        { time: '14:00', activity: '飯店 Check-in', location: 'Kyoto Station', note: '' }
-                                    ]
-                                },
-                                {
-                                    date: '01/01',
-                                    schedule: [
-                                        { time: '05:00', activity: '八坂神社初詣', location: 'Yasaka Shrine', note: '人很多要早起' }
-                                    ]
-                                }
-                            ]
+                            dateRange: '2025/12/31 - 01/01',
+                            places: [], expenses: [], shopping: [],
+                            days: [{ date: 'Day 1', schedule: [] }]
                         }
                     ]
+                }
+            },
+            mounted() {
+                // 1. 讀取儲存的資料
+                const savedData = localStorage.getItem('kyoto_app_data');
+                if (savedData) {
+                    try {
+                        this.trips = JSON.parse(savedData);
+                    } catch (e) {
+                        console.error('資料讀取失敗', e);
+                    }
+                }
+            },
+            watch: {
+                // 2. 監聽資料變化，自動存檔
+                trips: {
+                    handler(newTrips) {
+                        localStorage.setItem('kyoto_app_data', JSON.stringify(newTrips));
+                    },
+                    deep: true
                 }
             },
             computed: {
@@ -385,16 +380,14 @@
                     this.currentDayIndex = this.activeTrip.days.length - 1;
                 },
 
-                // --- Item Management (Unified) ---
+                // --- Item Management ---
                 openAddItemModal() {
                     this.isEditingItem = false;
                     this.editIndex = -1;
-                    // Default values based on tab
                     if(this.activeTab === 'schedule') this.tempData = { time: '08:00', activity: '', location: '', note: '' };
                     else if(this.activeTab === 'map') this.tempData = { name: '', address: '' };
                     else if(this.activeTab === 'budget') this.tempData = { name: '', amount: '' };
                     else if(this.activeTab === 'shopping') this.tempData = { name: '', note: '', checked: false };
-                    
                     this.modals.item = true;
                 },
                 openEditModal(item, index) {
@@ -412,34 +405,51 @@
                     else if(this.activeTab === 'budget') targetArray = this.activeTrip.expenses;
                     else if(this.activeTab === 'shopping') targetArray = this.activeTrip.shopping;
 
-                    if(this.isEditingItem) {
-                        targetArray[this.editIndex] = this.tempData;
-                    } else {
-                        targetArray.push(this.tempData);
-                    }
+                    if(this.isEditingItem) targetArray[this.editIndex] = this.tempData;
+                    else targetArray.push(this.tempData);
                     
-                    // Sort schedule only
-                    if(this.activeTab === 'schedule') {
-                        targetArray.sort((a, b) => a.time.localeCompare(b.time));
-                    }
+                    if(this.activeTab === 'schedule') targetArray.sort((a, b) => a.time.localeCompare(b.time));
                     
                     this.modals.item = false;
                 },
-                
                 deleteCurrentItem() {
                     this.deleteItem(this.activeTab === 'schedule' ? 'schedule' : this.activeTab, this.editIndex);
                     this.modals.item = false;
                 },
-                
                 deleteItem(type, index) {
                     if(!confirm('確定刪除？')) return;
-                    if(type === 'schedule') {
-                        this.activeTrip.days[this.currentDayIndex].schedule.splice(index, 1);
-                    } else if(type === 'places') { // map view uses places
-                        this.activeTrip.places.splice(index, 1);
-                    } else {
-                        this.activeTrip[type].splice(index, 1);
-                    }
+                    if(type === 'schedule') this.activeTrip.days[this.currentDayIndex].schedule.splice(index, 1);
+                    else if(type === 'places') this.activeTrip.places.splice(index, 1);
+                    else this.activeTrip[type].splice(index, 1);
+                },
+
+                // --- 備份功能 (取代 GitHub 儲存) ---
+                exportData() {
+                    const dataStr = JSON.stringify(this.trips);
+                    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                    const exportFileDefaultName = 'kyoto_trip_backup.json';
+                    const linkElement = document.createElement('a');
+                    linkElement.setAttribute('href', dataUri);
+                    linkElement.setAttribute('download', exportFileDefaultName);
+                    linkElement.click();
+                },
+                importData(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const loadedTrips = JSON.parse(e.target.result);
+                            if (confirm('匯入將會覆蓋現有資料，確定嗎？')) {
+                                this.trips = loadedTrips;
+                                this.showSettings = false;
+                                alert('匯入成功！');
+                            }
+                        } catch (err) {
+                            alert('檔案格式錯誤');
+                        }
+                    };
+                    reader.readAsText(file);
                 }
             }
         }).mount('#app')
