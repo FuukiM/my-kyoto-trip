@@ -6,9 +6,10 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#4A3B32"> <title>雪の京都旅</title>
+    <meta name="theme-color" content="#4A3B32">
+
+    <title>雪の京都旅</title>
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -44,36 +45,38 @@
         .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.2s ease-out; }
         .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
 
-        /* 4. 關鍵 CSS：避開手機瀏海與底部橫條 */
+        /* 安全區域設定：使用 padding-top/bottom 確保不被瀏海遮擋 */
         .safe-top { padding-top: env(safe-area-inset-top); }
         .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
-<body class="text-gray-700 font-sans h-screen flex justify-center bg-gray-200 overflow-hidden">
+<body class="text-gray-700 font-sans h-[100dvh] w-screen flex justify-center bg-gray-200 overflow-hidden">
 
     <div id="app" class="w-full max-w-md h-full bg-kyoto-paper relative shadow-2xl overflow-hidden flex flex-col">
         
-        <header class="bg-kyoto-wood text-white px-4 py-3 flex justify-between items-center shadow-md z-20 shrink-0 min-h-[3.5rem] safe-top box-content">
-            <div v-if="currentView !== 'home'" @click="currentView = 'home'" class="cursor-pointer w-16 text-sm flex items-center">
-                <i class="fa-solid fa-chevron-left mr-1"></i>返回
-            </div>
-            <div v-else class="w-16">
-                <button @click="showSettings = true" class="text-white/70 hover:text-white"><i class="fa-solid fa-gear"></i></button>
-            </div>
+        <header class="bg-kyoto-wood text-white px-4 py-2 flex justify-between items-center shadow-md z-20 shrink-0 safe-top min-h-[3.5rem]">
+            <div class="w-full h-full flex justify-between items-center">
+                <div v-if="currentView !== 'home'" @click="currentView = 'home'" class="cursor-pointer w-16 text-sm flex items-center">
+                    <i class="fa-solid fa-chevron-left mr-1"></i>返回
+                </div>
+                <div v-else class="w-16">
+                    <button @click="showSettings = true" class="text-white/70 hover:text-white"><i class="fa-solid fa-gear"></i></button>
+                </div>
 
-            <h1 class="font-serif text-base tracking-widest font-bold truncate max-w-[50%]">{{ currentTitle }}</h1>
-            
-            <div class="w-16 text-right">
-                <button v-if="currentView === 'home'" @click="openTripModal(null)" class="text-white hover:text-gray-300">
-                    <i class="fa-solid fa-plus text-lg"></i>
-                </button>
-                <button v-if="currentView === 'trip-detail'" @click="openAddItemModal()" class="text-white hover:text-gray-300">
-                    <i class="fa-solid fa-plus text-lg"></i>
-                </button>
+                <h1 class="font-serif text-base tracking-widest font-bold truncate max-w-[50%]">{{ currentTitle }}</h1>
+                
+                <div class="w-16 text-right">
+                    <button v-if="currentView === 'home'" @click="openTripModal(null)" class="text-white hover:text-gray-300">
+                        <i class="fa-solid fa-plus text-lg"></i>
+                    </button>
+                    <button v-if="currentView === 'trip-detail'" @click="openAddItemModal()" class="text-white hover:text-gray-300">
+                        <i class="fa-solid fa-plus text-lg"></i>
+                    </button>
+                </div>
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto no-scrollbar relative bg-kyoto-paper">
+        <main class="flex-1 min-h-0 overflow-y-auto no-scrollbar relative bg-kyoto-paper pb-4">
             
             <div v-if="currentView === 'home'" class="p-4 space-y-3">
                 <div v-for="trip in trips" :key="trip.id" class="relative group">
@@ -100,7 +103,7 @@
                 </div>
             </div>
 
-            <div v-else class="pb-20">
+            <div v-else>
                 <div v-if="activeTab === 'schedule'" class="p-0">
                     <div class="flex overflow-x-auto no-scrollbar bg-white shadow-sm sticky top-0 z-10 h-10 border-b border-gray-100">
                         <button v-for="(day, index) in activeTrip.days" :key="index"
@@ -184,11 +187,11 @@
             </div>
         </main>
 
-        <nav v-if="currentView === 'trip-detail'" class="bg-white border-t border-gray-200 flex justify-around items-center h-14 shrink-0 z-30 safe-bottom box-content">
+        <nav v-if="currentView === 'trip-detail'" class="bg-white border-t border-gray-200 flex justify-around items-center h-16 shrink-0 z-30 safe-bottom">
             <button v-for="tab in ['schedule', 'map', 'budget', 'shopping']" 
                     @click="activeTab = tab" 
                     :class="activeTab === tab ? 'text-kyoto-red' : 'text-gray-400'" 
-                    class="flex flex-col items-center w-16 transition-colors pt-1">
+                    class="flex flex-col items-center w-16 transition-colors h-full justify-center pb-2">
                 <i :class="getIcon(tab)" class="text-lg mb-0.5"></i>
                 <span class="text-[9px] font-bold capitalize">{{ getTabName(tab) }}</span>
             </button>
