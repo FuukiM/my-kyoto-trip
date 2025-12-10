@@ -47,6 +47,13 @@
 
         .safe-top { padding-top: env(safe-area-inset-top); }
         .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        
+        /* 連結樣式優化 */
+        .note-content a {
+            color: #3B82F6; /* Tailwind blue-500 */
+            text-decoration: underline;
+            word-break: break-all; /* 防止長網址撐開版面 */
+        }
     </style>
 </head>
 <body class="text-gray-700 font-sans h-[100dvh] w-screen flex justify-center bg-gray-200 overflow-hidden">
@@ -124,9 +131,12 @@
                                         <span class="text-kyoto-red font-bold text-xs bg-red-50 px-1.5 py-0.5 rounded mr-2">{{ item.time }}</span>
                                         <h4 class="font-bold text-gray-800 text-sm truncate">{{ item.activity }}</h4>
                                     </div>
-                                    <div class="text-[11px] text-gray-500 flex flex-wrap gap-2">
-                                        <span v-if="item.location" class="flex items-center"><i class="fa-solid fa-map-pin mr-1 text-gray-300"></i>{{ item.location }}</span>
-                                        <span v-if="item.note" class="text-gray-400 flex items-center"><i class="fa-regular fa-note-sticky mr-1"></i>{{ item.note }}</span>
+                                    <div class="text-[11px] text-gray-500 flex flex-col gap-1">
+                                        <span v-if="item.location" class="flex items-center"><i class="fa-solid fa-map-pin mr-1 text-gray-300 w-3"></i>{{ item.location }}</span>
+                                        <span v-if="item.note" class="text-gray-400 flex items-start note-content">
+                                            <i class="fa-regular fa-note-sticky mr-1 mt-0.5 w-3"></i>
+                                            <span v-html="formatNote(item.note)"></span>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -192,22 +202,18 @@
                     <div v-for="(item, idx) in activeTrip.todos" :key="idx" 
                          class="flex items-center bg-white p-3 rounded-lg shadow-sm border border-gray-100 transition-all"
                          :class="{'bg-gray-50': item.completed}">
-                        
                         <div @click="item.completed = !item.completed" 
                              class="w-5 h-5 rounded-md border-2 mr-3 flex items-center justify-center shrink-0 cursor-pointer transition-colors"
                              :class="item.completed ? 'bg-kyoto-indigo border-kyoto-indigo' : 'border-gray-300'">
                             <i v-if="item.completed" class="fa-solid fa-check text-white text-[10px]"></i>
                         </div>
-                        
                         <div class="flex-1" :class="{'opacity-40': item.completed}">
                             <p class="font-bold text-sm text-gray-700" :class="{'line-through': item.completed}">{{ item.text }}</p>
                         </div>
-
                         <button @click="deleteItem('todos', idx)" class="text-gray-300 px-2 text-xs hover:text-red-400">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
-                    
                     <div v-if="!activeTrip.todos || activeTrip.todos.length === 0" class="text-center text-gray-400 py-10 text-xs">
                         <i class="fa-solid fa-clipboard-list text-2xl mb-2 opacity-30"></i>
                         <p>暫無待辦事項</p>
@@ -255,7 +261,7 @@
                             <input v-model="tempData.activity" type="text" class="flex-1 border-b border-gray-300 py-1.5 outline-none" placeholder="活動名稱">
                         </div>
                         <input v-model="tempData.location" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="地點">
-                        <input v-model="tempData.note" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="備註">
+                        <textarea v-model="tempData.note" rows="3" class="w-full border border-gray-300 rounded p-2 text-sm outline-none focus:border-kyoto-red" placeholder="備註 (支援 http/https 網址)"></textarea>
                     </div>
                     
                     <div v-if="activeTab === 'map'" class="space-y-3 text-sm">
@@ -274,7 +280,7 @@
                     </div>
 
                     <div v-if="activeTab === 'todo'" class="space-y-3 text-sm">
-                        <input v-model="tempData.text" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="待辦事項內容 (例如：買保險)">
+                        <input v-model="tempData.text" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="待辦事項內容">
                     </div>
 
                     <div class="mt-5 flex justify-end gap-3">
@@ -366,11 +372,21 @@
                 getTabName(tab) { return { 'schedule': '行程', 'map': '地圖', 'budget': '記帳', 'shopping': '清單', 'todo': '待辦' }[tab] },
                 openTrip(trip) { 
                     this.activeTrip = trip; 
-                    // 初始化 todos 防止舊資料報錯
                     if(!this.activeTrip.todos) this.activeTrip.todos = [];
                     this.currentView = 'trip-detail'; 
                     this.activeTab = 'schedule'; 
                     this.currentDayIndex = 0; 
+                },
+                // 解析備註中的網址並轉為連結
+                formatNote(text) {
+                    if (!text) return '';
+                    let escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    // 支援 http 和 https
+                    const urlRegex = /(https?:\/\/[^\s]+)/g;
+                    // 將換行符號 \n 轉為 <br>，並將網址轉為 <a>
+                    return escaped.replace(urlRegex, (url) => {
+                        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+                    }).replace(/\n/g, '<br>');
                 },
                 openTripModal(trip) { 
                     this.tempData = trip ? JSON.parse(JSON.stringify(trip)) : { id: Date.now(), name: '', location: '', dateRange: '', days: [{date: 'Day 1', schedule:[]}], places:[], expenses:[], shopping:[], todos:[] }; 
