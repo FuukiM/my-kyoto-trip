@@ -48,12 +48,15 @@
         .safe-top { padding-top: env(safe-area-inset-top); }
         .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
         
-        /* 連結樣式優化 */
-        .note-content a {
-            color: #3B82F6; /* Tailwind blue-500 */
-            text-decoration: underline;
-            word-break: break-all; /* 防止長網址撐開版面 */
+        /* 滑動動畫 */
+        .slide-left-enter-active, .slide-left-leave-active, 
+        .slide-right-enter-active, .slide-right-leave-active {
+            transition: all 0.25s ease-out;
         }
+        .slide-left-enter-from { opacity: 0; transform: translateX(20px); }
+        .slide-left-leave-to { opacity: 0; transform: translateX(-20px); }
+        .slide-right-enter-from { opacity: 0; transform: translateX(-20px); }
+        .slide-right-leave-to { opacity: 0; transform: translateX(20px); }
     </style>
 </head>
 <body class="text-gray-700 font-sans h-[100dvh] w-screen flex justify-center bg-gray-200 overflow-hidden">
@@ -109,45 +112,59 @@
                 </div>
             </div>
 
-            <div v-else>
-                <div v-if="activeTab === 'schedule'" class="p-0">
-                    <div class="flex overflow-x-auto no-scrollbar bg-white shadow-sm sticky top-0 z-10 h-10 border-b border-gray-100">
+            <div v-else class="h-full flex flex-col">
+                <div v-if="activeTab === 'schedule'" class="flex-1 flex flex-col min-h-0">
+                    
+                    <div class="flex overflow-x-auto no-scrollbar bg-white shadow-sm shrink-0 z-10 h-10 border-b border-gray-100">
                         <button v-for="(day, index) in activeTrip.days" :key="index"
-                                @click="currentDayIndex = index"
+                                @click="changeDay(index)"
                                 class="flex-shrink-0 px-4 h-full text-xs font-bold border-b-2 transition-colors whitespace-nowrap flex items-center"
                                 :class="currentDayIndex === index ? 'border-kyoto-red text-kyoto-red bg-red-50/30' : 'border-transparent text-gray-400'">
                             {{ day.date }}
                         </button>
-                        <button @click="addDay" class="flex-shrink-0 px-3 h-full text-gray-300 hover:text-kyoto-wood text-xs bg-gray-50 border-l border-gray-100">
-                            <i class="fa-solid fa-plus"></i> Day
-                        </button>
+                        
+                        <div class="flex items-center border-l border-gray-100 px-2 bg-gray-50">
+                            <button @click="addDay" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-kyoto-wood">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                            <button v-if="activeTrip.days.length > 1" @click="deleteCurrentDay" class="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-500">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="px-3 py-3">
-                        <div class="relative border-l-2 border-gray-200 ml-2 space-y-3 pl-4 py-1">
-                            <div v-for="(item, idx) in currentDaySchedule" :key="idx" class="relative group">
-                                <div class="absolute -left-[1.4rem] bg-white border-2 border-kyoto-wood h-3 w-3 rounded-full mt-2"></div>
-                                <div @click="openEditModal(item, idx, 'schedule')" class="bg-white p-3 rounded-lg ios-shadow cursor-pointer hover:bg-gray-50 relative">
-                                    <div class="flex items-center mb-1">
-                                        <span class="text-kyoto-red font-bold text-xs bg-red-50 px-1.5 py-0.5 rounded mr-2">{{ item.time }}</span>
-                                        <h4 class="font-bold text-gray-800 text-sm truncate">{{ item.activity }}</h4>
+
+                    <div class="flex-1 overflow-y-auto no-scrollbar relative p-3"
+                         @touchstart="touchStart" 
+                         @touchend="touchEnd">
+                        
+                        <transition :name="slideDirection" mode="out-in">
+                            <div :key="currentDayIndex" class="min-h-full">
+                                <div class="relative border-l-2 border-gray-200 ml-2 space-y-3 pl-4 py-1">
+                                    <div v-for="(item, idx) in currentDaySchedule" :key="idx" class="relative group">
+                                        <div class="absolute -left-[1.4rem] bg-white border-2 border-kyoto-wood h-3 w-3 rounded-full mt-2"></div>
+                                        <div @click="openEditModal(item, idx, 'schedule')" class="bg-white p-3 rounded-lg ios-shadow cursor-pointer hover:bg-gray-50 relative select-none">
+                                            <div class="flex items-center mb-1">
+                                                <span class="text-kyoto-red font-bold text-xs bg-red-50 px-1.5 py-0.5 rounded mr-2">{{ item.time }}</span>
+                                                <h4 class="font-bold text-gray-800 text-sm truncate">{{ item.activity }}</h4>
+                                            </div>
+                                            <div class="text-[11px] text-gray-500 flex flex-wrap gap-2">
+                                                <span v-if="item.location" class="flex items-center"><i class="fa-solid fa-map-pin mr-1 text-gray-300"></i>{{ item.location }}</span>
+                                                <span v-if="item.note" class="text-gray-400 flex items-center"><i class="fa-regular fa-note-sticky mr-1"></i>{{ item.note }}</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="text-[11px] text-gray-500 flex flex-col gap-1">
-                                        <span v-if="item.location" class="flex items-center"><i class="fa-solid fa-map-pin mr-1 text-gray-300 w-3"></i>{{ item.location }}</span>
-                                        <span v-if="item.note" class="text-gray-400 flex items-start note-content">
-                                            <i class="fa-regular fa-note-sticky mr-1 mt-0.5 w-3"></i>
-                                            <span v-html="formatNote(item.note)"></span>
-                                        </span>
+                                    
+                                    <div v-if="!currentDaySchedule || currentDaySchedule.length === 0" class="text-center text-gray-400 py-10 text-xs flex flex-col items-center justify-center h-40">
+                                        <p class="mb-2">此日無行程</p>
+                                        <p class="text-[10px] opacity-60">左右滑動可切換日期</p>
                                     </div>
                                 </div>
                             </div>
-                            <div v-if="!currentDaySchedule || currentDaySchedule.length === 0" class="text-center text-gray-400 py-6 text-xs">
-                                無行程 (點右上角+)
-                            </div>
-                        </div>
+                        </transition>
                     </div>
                 </div>
 
-                <div v-if="activeTab === 'map'" class="p-3 space-y-2">
+                <div v-if="activeTab === 'map'" class="p-3 space-y-2 overflow-y-auto no-scrollbar flex-1">
                     <div v-for="(place, idx) in activeTrip.places" :key="idx" class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center">
                         <div class="overflow-hidden mr-2">
                             <h4 class="font-bold text-gray-800 text-sm truncate">{{ place.name }}</h4>
@@ -162,7 +179,7 @@
                     </div>
                 </div>
 
-                <div v-if="activeTab === 'budget'" class="p-3">
+                <div v-if="activeTab === 'budget'" class="p-3 overflow-y-auto no-scrollbar flex-1">
                     <div class="bg-kyoto-wood text-white rounded-xl p-4 mb-3 ios-shadow flex justify-between items-end">
                         <div>
                             <p class="text-[10px] opacity-80 mb-0">總支出 Total</p>
@@ -181,7 +198,7 @@
                     </div>
                 </div>
 
-                <div v-if="activeTab === 'shopping'" class="p-3 space-y-2">
+                <div v-if="activeTab === 'shopping'" class="p-3 space-y-2 overflow-y-auto no-scrollbar flex-1">
                     <div v-for="(item, idx) in activeTrip.shopping" :key="idx" 
                          class="flex items-center bg-white p-3 rounded-lg shadow-sm cursor-pointer"
                          :class="{'opacity-50 grayscale': item.checked}">
@@ -197,7 +214,7 @@
                     </div>
                 </div>
 
-                <div v-if="activeTab === 'todo'" class="p-3 space-y-2">
+                <div v-if="activeTab === 'todo'" class="p-3 space-y-2 overflow-y-auto no-scrollbar flex-1">
                     <h3 class="text-xs font-bold text-gray-400 mb-2 pl-1">待辦清單 (To-Do)</h3>
                     <div v-for="(item, idx) in activeTrip.todos" :key="idx" 
                          class="flex items-center bg-white p-3 rounded-lg shadow-sm border border-gray-100 transition-all"
@@ -261,7 +278,7 @@
                             <input v-model="tempData.activity" type="text" class="flex-1 border-b border-gray-300 py-1.5 outline-none" placeholder="活動名稱">
                         </div>
                         <input v-model="tempData.location" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="地點">
-                        <textarea v-model="tempData.note" rows="3" class="w-full border border-gray-300 rounded p-2 text-sm outline-none focus:border-kyoto-red" placeholder="備註 (支援 http/https 網址)"></textarea>
+                        <input v-model="tempData.note" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="備註">
                     </div>
                     
                     <div v-if="activeTab === 'map'" class="space-y-3 text-sm">
@@ -328,6 +345,11 @@
                     tempData: {},
                     isEditingItem: false,
                     editIndex: -1,
+                    // 滑動偵測變數
+                    touchStartX: 0,
+                    touchEndX: 0,
+                    slideDirection: 'slide-left',
+                    
                     trips: [
                         {
                             id: 1,
@@ -370,6 +392,7 @@
             methods: {
                 getIcon(tab) { return { 'schedule': 'fa-solid fa-timeline', 'map': 'fa-regular fa-map', 'budget': 'fa-solid fa-yen-sign', 'shopping': 'fa-solid fa-bag-shopping', 'todo': 'fa-solid fa-clipboard-check' }[tab] },
                 getTabName(tab) { return { 'schedule': '行程', 'map': '地圖', 'budget': '記帳', 'shopping': '清單', 'todo': '待辦' }[tab] },
+                
                 openTrip(trip) { 
                     this.activeTrip = trip; 
                     if(!this.activeTrip.todos) this.activeTrip.todos = [];
@@ -377,24 +400,58 @@
                     this.activeTab = 'schedule'; 
                     this.currentDayIndex = 0; 
                 },
-                // 解析備註中的網址並轉為連結
-                formatNote(text) {
-                    if (!text) return '';
-                    let escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                    // 支援 http 和 https
-                    const urlRegex = /(https?:\/\/[^\s]+)/g;
-                    // 將換行符號 \n 轉為 <br>，並將網址轉為 <a>
-                    return escaped.replace(urlRegex, (url) => {
-                        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-                    }).replace(/\n/g, '<br>');
+                
+                // --- Swipe Logic ---
+                touchStart(e) {
+                    this.touchStartX = e.changedTouches[0].screenX;
                 },
+                touchEnd(e) {
+                    this.touchEndX = e.changedTouches[0].screenX;
+                    this.handleSwipe();
+                },
+                handleSwipe() {
+                    if (this.touchEndX < this.touchStartX - 50) {
+                        // Swipe Left (Next Day)
+                        if (this.currentDayIndex < this.activeTrip.days.length - 1) {
+                            this.slideDirection = 'slide-left';
+                            this.currentDayIndex++;
+                        }
+                    }
+                    if (this.touchEndX > this.touchStartX + 50) {
+                        // Swipe Right (Prev Day)
+                        if (this.currentDayIndex > 0) {
+                            this.slideDirection = 'slide-right';
+                            this.currentDayIndex--;
+                        }
+                    }
+                },
+                changeDay(index) {
+                    this.slideDirection = index > this.currentDayIndex ? 'slide-left' : 'slide-right';
+                    this.currentDayIndex = index;
+                },
+                addDay() { 
+                    const newDayNum = this.activeTrip.days.length + 1; 
+                    this.activeTrip.days.push({ date: `Day ${newDayNum}`, schedule: [] }); 
+                    this.changeDay(this.activeTrip.days.length - 1);
+                },
+                deleteCurrentDay() {
+                    const currentDayName = this.activeTrip.days[this.currentDayIndex].date;
+                    if(confirm(`確定要刪除 ${currentDayName} 嗎？\n該天的所有行程將被清空。`)) {
+                        this.activeTrip.days.splice(this.currentDayIndex, 1);
+                        // 調整 Index 避免錯誤
+                        if (this.currentDayIndex >= this.activeTrip.days.length) {
+                            this.currentDayIndex = Math.max(0, this.activeTrip.days.length - 1);
+                        }
+                    }
+                },
+
+                // --- Other Methods (unchanged) ---
                 openTripModal(trip) { 
                     this.tempData = trip ? JSON.parse(JSON.stringify(trip)) : { id: Date.now(), name: '', location: '', dateRange: '', days: [{date: 'Day 1', schedule:[]}], places:[], expenses:[], shopping:[], todos:[] }; 
                     this.modals.trip = true; 
                 },
                 saveTrip() { if(!this.tempData.name) return; const idx = this.trips.findIndex(t => t.id === this.tempData.id); if(idx !== -1) { this.trips[idx] = this.tempData; if(this.activeTrip && this.activeTrip.id === this.tempData.id) this.activeTrip = this.tempData; } else { this.trips.push(this.tempData); } this.modals.trip = false; },
                 deleteTrip() { if(confirm('刪除此旅程？')) { this.trips = this.trips.filter(t => t.id !== this.tempData.id); this.modals.trip = false; this.currentView = 'home'; } },
-                addDay() { const newDayNum = this.activeTrip.days.length + 1; this.activeTrip.days.push({ date: `Day ${newDayNum}`, schedule: [] }); this.currentDayIndex = this.activeTrip.days.length - 1; },
                 openAddItemModal() { 
                     this.isEditingItem = false; 
                     this.editIndex = -1; 
@@ -405,7 +462,11 @@
                     else if(this.activeTab === 'todo') this.tempData = { text: '', completed: false };
                     this.modals.item = true; 
                 },
-                openEditModal(item, index) { this.isEditingItem = true; this.editIndex = index; this.tempData = JSON.parse(JSON.stringify(item)); this.modals.item = true; },
+                openEditModal(item, index, tab) { 
+                    if(tab === 'schedule') {
+                         this.isEditingItem = true; this.editIndex = index; this.tempData = JSON.parse(JSON.stringify(item)); this.modals.item = true; 
+                    }
+                },
                 closeItemModal() { this.modals.item = false; },
                 saveItem() { 
                     let targetArray; 
