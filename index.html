@@ -42,9 +42,7 @@
         .ios-shadow { box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
-        .slide-up-enter-active, .slide-up-leave-active { transition: transform 0.2s ease-out; }
-        .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
-
+        
         .safe-top { padding-top: env(safe-area-inset-top); }
         .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
         
@@ -56,196 +54,215 @@
         .slide-left-leave-to { opacity: 0; transform: translateX(-20px); }
         .slide-right-enter-from { opacity: 0; transform: translateX(-20px); }
         .slide-right-leave-to { opacity: 0; transform: translateX(20px); }
+
+        /* --- 列印專用 CSS --- */
+        @media print {
+            body { background-color: white; height: auto; overflow: visible; }
+            #app { box-shadow: none; max-width: none; height: auto; overflow: visible; }
+            
+            /* 隱藏所有手機介面元素 */
+            .screen-only { display: none !important; }
+            
+            /* 顯示列印版面 */
+            .print-only { display: block !important; }
+            
+            /* 分頁控制 */
+            .page-break { page-break-inside: avoid; margin-bottom: 2rem; }
+        }
     </style>
 </head>
 <body class="text-gray-700 font-sans h-[100dvh] w-screen flex justify-center bg-gray-200 overflow-hidden">
 
     <div id="app" class="w-full max-w-md h-full bg-kyoto-paper relative shadow-2xl overflow-hidden flex flex-col">
         
-        <header class="bg-kyoto-wood text-white px-4 py-2 flex justify-between items-center shadow-md z-20 shrink-0 safe-top min-h-[3.5rem]">
-            <div class="w-full h-full flex justify-between items-center">
-                <div v-if="currentView !== 'home'" @click="currentView = 'home'" class="cursor-pointer w-16 text-sm flex items-center">
-                    <i class="fa-solid fa-chevron-left mr-1"></i>返回
-                </div>
-                <div v-else class="w-16">
-                    <button @click="showSettings = true" class="text-white/70 hover:text-white"><i class="fa-solid fa-gear"></i></button>
-                </div>
-
-                <h1 class="font-serif text-base tracking-widest font-bold truncate max-w-[50%]">{{ currentTitle }}</h1>
-                
-                <div class="w-16 text-right">
-                    <button v-if="currentView === 'home'" @click="openTripModal(null)" class="text-white hover:text-gray-300">
-                        <i class="fa-solid fa-plus text-lg"></i>
-                    </button>
-                    <button v-if="currentView === 'trip-detail'" @click="openAddItemModal()" class="text-white hover:text-gray-300">
-                        <i class="fa-solid fa-plus text-lg"></i>
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <main class="flex-1 min-h-0 overflow-y-auto no-scrollbar relative bg-kyoto-paper pb-4">
+        <div class="screen-only flex flex-col h-full w-full overflow-hidden">
             
-            <div v-if="currentView === 'home'" class="p-4 space-y-3">
-                <div v-for="trip in trips" :key="trip.id" class="relative group">
-                    <button @click.stop="openTripModal(trip)" class="absolute top-2 right-2 z-10 bg-white/90 w-7 h-7 rounded-full shadow text-gray-500 hover:text-kyoto-red flex items-center justify-center">
-                        <i class="fa-solid fa-pen text-[10px]"></i>
-                    </button>
-                    <div @click="openTrip(trip)" class="bg-white rounded-xl p-0 ios-shadow transform transition active:scale-98 cursor-pointer overflow-hidden flex h-24">
-                        <div class="w-24 bg-gradient-to-br from-snow-blue to-white relative shrink-0 flex items-center justify-center">
-                             <i class="fa-solid fa-mountain-sun text-4xl text-blue-100"></i>
-                        </div>
-                        <div class="p-3 flex-1 flex flex-col justify-center border-r-4 border-kyoto-red">
-                            <div class="flex justify-between items-start mb-1">
-                                <h2 class="text-base font-bold text-kyoto-wood leading-tight">{{ trip.name }}</h2>
-                                <span class="text-[10px] bg-gray-100 px-1 rounded text-gray-500">{{ trip.days.length }}天</span>
-                            </div>
-                            <p class="text-xs text-gray-500 mb-1"><i class="fa-solid fa-location-dot mr-1"></i>{{ trip.location }}</p>
-                            <p class="text-[10px] text-gray-400"><i class="fa-regular fa-calendar mr-1"></i>{{ trip.dateRange }}</p>
-                        </div>
+            <header class="bg-kyoto-wood text-white px-4 py-2 flex justify-between items-center shadow-md z-20 shrink-0 safe-top min-h-[3.5rem]">
+                <div class="w-full h-full flex justify-between items-center">
+                    <div v-if="currentView !== 'home'" @click="currentView = 'home'" class="cursor-pointer w-16 text-sm flex items-center">
+                        <i class="fa-solid fa-chevron-left mr-1"></i>返回
                     </div>
-                </div>
-                <div v-if="trips.length === 0" @click="openTripModal(null)" class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center text-gray-400 cursor-pointer hover:bg-gray-50">
-                    <i class="fa-solid fa-plus text-xl mb-1"></i>
-                    <p class="text-sm">建立第一個旅程</p>
-                </div>
-            </div>
+                    <div v-else class="w-16">
+                        <button @click="showSettings = true" class="text-white/70 hover:text-white"><i class="fa-solid fa-gear"></i></button>
+                    </div>
 
-            <div v-else class="h-full flex flex-col">
-                <div v-if="activeTab === 'schedule'" class="flex-1 flex flex-col min-h-0">
-                    <div class="flex overflow-x-auto no-scrollbar bg-white shadow-sm shrink-0 z-10 h-10 border-b border-gray-100">
-                        <button v-for="(day, index) in activeTrip.days" :key="index"
-                                @click="changeDay(index)"
-                                class="flex-shrink-0 px-4 h-full text-xs font-bold border-b-2 transition-colors whitespace-nowrap flex items-center"
-                                :class="currentDayIndex === index ? 'border-kyoto-red text-kyoto-red bg-red-50/30' : 'border-transparent text-gray-400'">
-                            {{ day.date }}
+                    <h1 class="font-serif text-base tracking-widest font-bold truncate max-w-[50%]">{{ currentTitle }}</h1>
+                    
+                    <div class="w-16 text-right">
+                        <button v-if="currentView === 'home'" @click="openTripModal(null)" class="text-white hover:text-gray-300">
+                            <i class="fa-solid fa-plus text-lg"></i>
                         </button>
-                        <div class="flex items-center border-l border-gray-100 px-2 bg-gray-50">
-                            <button @click="addDay" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-kyoto-wood"><i class="fa-solid fa-plus"></i></button>
-                            <button v-if="activeTrip.days.length > 1" @click="deleteCurrentDay" class="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-500"><i class="fa-regular fa-trash-can"></i></button>
+                        <button v-if="currentView === 'trip-detail'" @click="openAddItemModal()" class="text-white hover:text-gray-300">
+                            <i class="fa-solid fa-plus text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 min-h-0 overflow-y-auto no-scrollbar relative bg-kyoto-paper pb-4">
+                
+                <div v-if="currentView === 'home'" class="p-4 space-y-3">
+                    <div v-for="trip in trips" :key="trip.id" class="relative group">
+                        <button @click.stop="openTripModal(trip)" class="absolute top-2 right-2 z-10 bg-white/90 w-7 h-7 rounded-full shadow text-gray-500 hover:text-kyoto-red flex items-center justify-center">
+                            <i class="fa-solid fa-pen text-[10px]"></i>
+                        </button>
+                        <div @click="openTrip(trip)" class="bg-white rounded-xl p-0 ios-shadow transform transition active:scale-98 cursor-pointer overflow-hidden flex h-24">
+                            <div class="w-24 bg-gradient-to-br from-snow-blue to-white relative shrink-0 flex items-center justify-center">
+                                 <i class="fa-solid fa-mountain-sun text-4xl text-blue-100"></i>
+                            </div>
+                            <div class="p-3 flex-1 flex flex-col justify-center border-r-4 border-kyoto-red">
+                                <div class="flex justify-between items-start mb-1">
+                                    <h2 class="text-base font-bold text-kyoto-wood leading-tight">{{ trip.name }}</h2>
+                                    <span class="text-[10px] bg-gray-100 px-1 rounded text-gray-500">{{ trip.days.length }}天</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mb-1"><i class="fa-solid fa-location-dot mr-1"></i>{{ trip.location }}</p>
+                                <p class="text-[10px] text-gray-400"><i class="fa-regular fa-calendar mr-1"></i>{{ trip.dateRange }}</p>
+                            </div>
                         </div>
                     </div>
+                    <div v-if="trips.length === 0" @click="openTripModal(null)" class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center text-gray-400 cursor-pointer hover:bg-gray-50">
+                        <i class="fa-solid fa-plus text-xl mb-1"></i>
+                        <p class="text-sm">建立第一個旅程</p>
+                    </div>
+                </div>
 
-                    <div class="flex-1 overflow-y-auto no-scrollbar relative p-3" @touchstart="touchStart" @touchend="touchEnd">
-                        <transition :name="slideDirection" mode="out-in">
-                            <div :key="currentDayIndex" class="min-h-full">
-                                <div class="relative border-l-2 border-gray-200 ml-2 space-y-3 pl-4 py-1">
-                                    <div v-for="(item, idx) in currentDaySchedule" :key="idx" class="relative group">
-                                        <div class="absolute -left-[1.4rem] bg-white border-2 border-kyoto-wood h-3 w-3 rounded-full mt-2"></div>
-                                        <div @click="openEditModal(item, idx, 'schedule')" class="bg-white p-3 rounded-lg ios-shadow cursor-pointer hover:bg-gray-50 relative select-none">
-                                            <div class="flex items-center mb-1">
-                                                <span class="text-kyoto-red font-bold text-xs bg-red-50 px-1.5 py-0.5 rounded mr-2">{{ item.time }}</span>
-                                                <h4 class="font-bold text-gray-800 text-sm truncate">{{ item.activity }}</h4>
-                                            </div>
-                                            <div class="text-[11px] text-gray-500 flex flex-col gap-1">
-                                                <span v-if="item.location" class="flex items-center"><i class="fa-solid fa-map-pin mr-1 text-gray-300 w-3"></i>{{ item.location }}</span>
-                                                <span v-if="item.note" class="text-gray-400 flex items-start" v-html="linkifyWithIcon(item.note)"></span>
+                <div v-else class="h-full flex flex-col">
+                    <div v-if="activeTab === 'schedule'" class="flex-1 flex flex-col min-h-0">
+                        <div class="flex overflow-x-auto no-scrollbar bg-white shadow-sm shrink-0 z-10 h-10 border-b border-gray-100">
+                            <button v-for="(day, index) in activeTrip.days" :key="index"
+                                    @click="changeDay(index)"
+                                    class="flex-shrink-0 px-4 h-full text-xs font-bold border-b-2 transition-colors whitespace-nowrap flex items-center"
+                                    :class="currentDayIndex === index ? 'border-kyoto-red text-kyoto-red bg-red-50/30' : 'border-transparent text-gray-400'">
+                                {{ day.date }}
+                            </button>
+                            <div class="flex items-center border-l border-gray-100 px-2 bg-gray-50">
+                                <button @click="addDay" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-kyoto-wood"><i class="fa-solid fa-plus"></i></button>
+                                <button v-if="activeTrip.days.length > 1" @click="deleteCurrentDay" class="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-red-500"><i class="fa-regular fa-trash-can"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto no-scrollbar relative p-3" @touchstart="touchStart" @touchend="touchEnd">
+                            <transition :name="slideDirection" mode="out-in">
+                                <div :key="currentDayIndex" class="min-h-full">
+                                    <div class="relative border-l-2 border-gray-200 ml-2 space-y-3 pl-4 py-1">
+                                        <div v-for="(item, idx) in currentDaySchedule" :key="idx" class="relative group">
+                                            <div class="absolute -left-[1.4rem] bg-white border-2 border-kyoto-wood h-3 w-3 rounded-full mt-2"></div>
+                                            <div @click="openEditModal(item, idx, 'schedule')" class="bg-white p-3 rounded-lg ios-shadow cursor-pointer hover:bg-gray-50 relative select-none">
+                                                <div class="flex items-center mb-1">
+                                                    <span class="text-kyoto-red font-bold text-xs bg-red-50 px-1.5 py-0.5 rounded mr-2">{{ item.time }}</span>
+                                                    <h4 class="font-bold text-gray-800 text-sm truncate">{{ item.activity }}</h4>
+                                                </div>
+                                                <div class="text-[11px] text-gray-500 flex flex-col gap-1">
+                                                    <span v-if="item.location" class="flex items-center"><i class="fa-solid fa-map-pin mr-1 text-gray-300 w-3"></i>{{ item.location }}</span>
+                                                    <span v-if="item.note" class="text-gray-400 flex items-start" v-html="linkifyWithIcon(item.note)"></span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div v-if="!currentDaySchedule || currentDaySchedule.length === 0" class="text-center text-gray-400 py-10 text-xs flex flex-col items-center justify-center h-40">
-                                        <p class="mb-2">此日無行程</p>
-                                        <p class="text-[10px] opacity-60">左右滑動可切換日期</p>
+                                        <div v-if="!currentDaySchedule || currentDaySchedule.length === 0" class="text-center text-gray-400 py-10 text-xs flex flex-col items-center justify-center h-40">
+                                            <p class="mb-2">此日無行程</p>
+                                            <p class="text-[10px] opacity-60">左右滑動可切換日期</p>
+                                        </div>
                                     </div>
                                 </div>
+                            </transition>
+                        </div>
+                    </div>
+                    
+                    <div v-if="activeTab !== 'schedule'" class="p-3 space-y-2 overflow-y-auto no-scrollbar flex-1">
+                        <div v-if="activeTab === 'map'" v-for="(place, idx) in activeTrip.places" :key="idx" @click="openEditModal(place, idx, 'map')" class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer">
+                            <div class="overflow-hidden mr-2">
+                                <h4 class="font-bold text-gray-800 text-sm truncate">{{ place.name }}</h4>
+                                <p class="text-[10px] text-gray-500 truncate">{{ place.address }}</p>
                             </div>
-                        </transition>
-                    </div>
-                </div>
-
-                <div v-if="activeTab === 'map'" class="p-3 space-y-2 overflow-y-auto no-scrollbar flex-1">
-                    <div v-for="(place, idx) in activeTrip.places" :key="idx" 
-                         @click="openEditModal(place, idx, 'map')"
-                         class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer hover:bg-gray-50">
-                        <div class="overflow-hidden mr-2">
-                            <h4 class="font-bold text-gray-800 text-sm truncate">{{ place.name }}</h4>
-                            <p class="text-[10px] text-gray-500 truncate">{{ place.address }}</p>
-                        </div>
-                        <div class="flex space-x-2 shrink-0">
-                            <a :href="'https://www.google.com/maps/search/?api=1&query=' + place.name" target="_blank" @click.stop class="w-7 h-7 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center text-xs">
-                                <i class="fa-solid fa-location-arrow"></i>
-                            </a>
-                            <button @click.stop="deleteItem('places', idx)" class="w-7 h-7 text-gray-300 hover:text-red-400 text-xs"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                </div>
-
-                <div v-if="activeTab === 'budget'" class="p-3 overflow-y-auto no-scrollbar flex-1">
-                    <div class="bg-kyoto-wood text-white rounded-xl p-4 mb-3 ios-shadow flex justify-between items-end">
-                        <div>
-                            <p class="text-[10px] opacity-80 mb-0">總支出 Total</p>
-                            <h2 class="text-2xl font-serif">¥ {{ totalExpense.toLocaleString() }}</h2>
-                        </div>
-                        <i class="fa-solid fa-yen-sign text-4xl opacity-10"></i>
-                    </div>
-                    <div class="space-y-2">
-                        <div v-for="(item, idx) in activeTrip.expenses" :key="idx" 
-                             @click="openEditModal(item, idx, 'budget')"
-                             class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-100 cursor-pointer hover:bg-gray-50">
-                            <p class="font-bold text-gray-700 text-sm">{{ item.name }}</p>
-                            <div class="flex items-center gap-2">
-                                <span class="font-mono font-bold text-gray-800 text-sm">-¥{{ item.amount }}</span>
-                                <button @click.stop="deleteItem('expenses', idx)" class="text-gray-300 text-[10px] hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
+                            <div class="flex space-x-2 shrink-0">
+                                <a :href="'https://www.google.com/maps/search/?api=1&query=' + place.name" target="_blank" @click.stop class="w-7 h-7 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-location-arrow"></i></a>
+                                <button @click.stop="deleteItem('places', idx)" class="w-7 h-7 text-gray-300 hover:text-red-400 text-xs"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
+
+                        <div v-if="activeTab === 'budget'">
+                             <div class="bg-kyoto-wood text-white rounded-xl p-4 mb-3 ios-shadow flex justify-between items-end">
+                                <div><p class="text-[10px] opacity-80 mb-0">總支出 Total</p><h2 class="text-2xl font-serif">¥ {{ totalExpense.toLocaleString() }}</h2></div>
+                                <i class="fa-solid fa-yen-sign text-4xl opacity-10"></i>
+                            </div>
+                            <div v-for="(item, idx) in activeTrip.expenses" :key="idx" @click="openEditModal(item, idx, 'budget')" class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-100 cursor-pointer mb-2">
+                                <p class="font-bold text-gray-700 text-sm">{{ item.name }}</p>
+                                <div class="flex items-center gap-2"><span class="font-mono font-bold text-gray-800 text-sm">-¥{{ item.amount }}</span><button @click.stop="deleteItem('expenses', idx)" class="text-gray-300 text-[10px] hover:text-red-400"><i class="fa-solid fa-trash"></i></button></div>
+                            </div>
+                        </div>
+
+                        <div v-if="activeTab === 'shopping'" v-for="(item, idx) in activeTrip.shopping" :key="idx" class="flex items-center bg-white p-3 rounded-lg shadow-sm cursor-pointer transition-all" :class="{'opacity-60 grayscale bg-gray-50': item.checked}">
+                            <div @click.stop="item.checked = !item.checked" class="w-5 h-5 rounded border-2 mr-3 flex items-center justify-center shrink-0 transition-colors" :class="item.checked ? 'bg-kyoto-red border-kyoto-red' : 'border-gray-300'"><i v-if="item.checked" class="fa-solid fa-check text-white text-[10px]"></i></div>
+                            <div class="flex-1 overflow-hidden" @click="openEditModal(item, idx, 'shopping')"><p class="font-bold text-sm truncate" :class="{'line-through text-gray-400': item.checked}">{{ item.name }}</p><p class="text-[10px] text-gray-500 truncate" v-if="item.note">{{ item.note }}</p></div>
+                            <button @click.stop="deleteItem('shopping', idx)" class="text-gray-300 px-2 text-xs hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+
+                         <div v-if="activeTab === 'todo'" v-for="(item, idx) in activeTrip.todos" :key="idx" class="flex items-center bg-white p-3 rounded-lg shadow-sm border border-gray-100 transition-all" :class="{'bg-gray-50': item.completed}">
+                            <div @click.stop="item.completed = !item.completed" class="w-5 h-5 rounded-md border-2 mr-3 flex items-center justify-center shrink-0 cursor-pointer transition-colors" :class="item.completed ? 'bg-kyoto-indigo border-kyoto-indigo' : 'border-gray-300'"><i v-if="item.completed" class="fa-solid fa-check text-white text-[10px]"></i></div>
+                            <div class="flex-1 cursor-pointer" @click="openEditModal(item, idx, 'todo')" :class="{'opacity-40': item.completed}"><p class="font-bold text-sm text-gray-700" :class="{'line-through': item.completed}">{{ item.text }}</p></div>
+                            <button @click.stop="deleteItem('todos', idx)" class="text-gray-300 px-2 text-xs hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
+                        </div>
                     </div>
                 </div>
 
-                <div v-if="activeTab === 'shopping'" class="p-3 space-y-2 overflow-y-auto no-scrollbar flex-1">
-                    <div v-for="(item, idx) in activeTrip.shopping" :key="idx" 
-                         class="flex items-center bg-white p-3 rounded-lg shadow-sm cursor-pointer transition-all hover:bg-gray-50"
-                         :class="{'opacity-60 grayscale bg-gray-50': item.checked}">
-                        <div @click.stop="item.checked = !item.checked" 
-                             class="w-5 h-5 rounded border-2 mr-3 flex items-center justify-center shrink-0 transition-colors"
-                             :class="item.checked ? 'bg-kyoto-red border-kyoto-red' : 'border-gray-300'">
-                            <i v-if="item.checked" class="fa-solid fa-check text-white text-[10px]"></i>
-                        </div>
-                        <div class="flex-1 overflow-hidden" @click="openEditModal(item, idx, 'shopping')">
-                            <p class="font-bold text-sm truncate" :class="{'line-through text-gray-400': item.checked}">{{ item.name }}</p>
-                            <p class="text-[10px] text-gray-500 truncate" v-if="item.note">{{ item.note }}</p>
-                        </div>
-                        <button @click.stop="deleteItem('shopping', idx)" class="text-gray-300 px-2 text-xs hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                </div>
+                <nav v-if="currentView === 'trip-detail'" class="bg-white border-t border-gray-200 flex justify-around items-center h-16 shrink-0 z-30 safe-bottom">
+                    <button v-for="tab in ['schedule', 'map', 'budget', 'shopping', 'todo']" @click="activeTab = tab" :class="activeTab === tab ? 'text-kyoto-red' : 'text-gray-400'" class="flex flex-col items-center w-14 transition-colors h-full justify-center pb-2">
+                        <i :class="getIcon(tab)" class="text-lg mb-0.5"></i>
+                        <span class="text-[9px] font-bold capitalize">{{ getTabName(tab) }}</span>
+                    </button>
+                </nav>
+            </main>
+        </div>
 
-                <div v-if="activeTab === 'todo'" class="p-3 space-y-2 overflow-y-auto no-scrollbar flex-1">
-                    <h3 class="text-xs font-bold text-gray-400 mb-2 pl-1">待辦清單 (To-Do)</h3>
-                    <div v-for="(item, idx) in activeTrip.todos" :key="idx" 
-                         class="flex items-center bg-white p-3 rounded-lg shadow-sm border border-gray-100 transition-all hover:bg-gray-50"
-                         :class="{'bg-gray-50': item.completed}">
-                        <div @click.stop="item.completed = !item.completed" 
-                             class="w-5 h-5 rounded-md border-2 mr-3 flex items-center justify-center shrink-0 cursor-pointer transition-colors"
-                             :class="item.completed ? 'bg-kyoto-indigo border-kyoto-indigo' : 'border-gray-300'">
-                            <i v-if="item.completed" class="fa-solid fa-check text-white text-[10px]"></i>
-                        </div>
-                        <div class="flex-1 cursor-pointer" @click="openEditModal(item, idx, 'todo')" :class="{'opacity-40': item.completed}">
-                            <p class="font-bold text-sm text-gray-700" :class="{'line-through': item.completed}">{{ item.text }}</p>
-                        </div>
-                        <button @click.stop="deleteItem('todos', idx)" class="text-gray-300 px-2 text-xs hover:text-red-400">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                    <div v-if="!activeTrip.todos || activeTrip.todos.length === 0" class="text-center text-gray-400 py-10 text-xs">
-                        <i class="fa-solid fa-clipboard-list text-2xl mb-2 opacity-30"></i>
-                        <p>暫無待辦事項</p>
-                    </div>
-                </div>
-
+        <div v-if="activeTrip" class="hidden print-only p-8 bg-white text-gray-800">
+            <div class="text-center border-b-2 border-kyoto-red pb-4 mb-8">
+                <h1 class="text-4xl font-serif font-bold text-kyoto-wood mb-2">{{ activeTrip.name }}</h1>
+                <p class="text-gray-500"><i class="fa-solid fa-location-dot mr-2"></i>{{ activeTrip.location }}</p>
+                <p class="text-gray-500 mt-1">{{ activeTrip.dateRange }}</p>
             </div>
-        </main>
 
-        <nav v-if="currentView === 'trip-detail'" class="bg-white border-t border-gray-200 flex justify-around items-center h-16 shrink-0 z-30 safe-bottom">
-            <button v-for="tab in ['schedule', 'map', 'budget', 'shopping', 'todo']" 
-                    @click="activeTab = tab" 
-                    :class="activeTab === tab ? 'text-kyoto-red' : 'text-gray-400'" 
-                    class="flex flex-col items-center w-14 transition-colors h-full justify-center pb-2">
-                <i :class="getIcon(tab)" class="text-lg mb-0.5"></i>
-                <span class="text-[9px] font-bold capitalize">{{ getTabName(tab) }}</span>
-            </button>
-        </nav>
+            <div v-for="(day, index) in activeTrip.days" :key="index" class="page-break">
+                <div class="flex items-center mb-4">
+                    <span class="bg-kyoto-wood text-white px-3 py-1 text-sm font-bold rounded mr-3">Day {{ index + 1 }}</span>
+                    <h3 class="text-xl font-bold text-gray-700">{{ day.date }}</h3>
+                </div>
+                
+                <div class="border-l-2 border-gray-200 ml-4 pl-6 space-y-6">
+                    <div v-for="(item, idx) in day.schedule" :key="idx" class="relative">
+                        <div class="absolute -left-[1.95rem] bg-white border-2 border-kyoto-wood h-3 w-3 rounded-full mt-1.5"></div>
+                        <div class="flex items-start">
+                            <div class="w-16 shrink-0 font-bold text-kyoto-red pt-0.5">{{ item.time }}</div>
+                            <div>
+                                <h4 class="font-bold text-lg leading-tight">{{ item.activity }}</h4>
+                                <div class="text-sm text-gray-500 mt-1">
+                                    <span v-if="item.location" class="mr-3"><i class="fa-solid fa-map-pin mr-1"></i>{{ item.location }}</span>
+                                    <span v-if="item.note"><i class="fa-regular fa-note-sticky mr-1"></i>{{ item.note }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="day.schedule.length === 0" class="text-gray-400 italic text-sm">此日無行程</div>
+                </div>
+            </div>
+            
+            <div class="mt-8 border-t border-gray-200 pt-6 grid grid-cols-2 gap-8">
+                <div>
+                    <h3 class="font-bold text-lg mb-3">待辦清單</h3>
+                    <ul class="list-disc pl-5 text-sm">
+                        <li v-for="t in activeTrip.todos" :class="{'line-through text-gray-400': t.completed}">{{ t.text }}</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg mb-3">購物清單</h3>
+                    <ul class="list-disc pl-5 text-sm">
+                        <li v-for="s in activeTrip.shopping">{{ s.name }} <span v-if="s.note" class="text-gray-400">({{ s.note }})</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
         <transition name="fade">
-            <div v-if="modals.trip" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" @click.self="modals.trip = false">
+            <div v-if="modals.trip" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 screen-only" @click.self="modals.trip = false">
                 <div class="bg-white w-full max-w-xs rounded-xl p-5 shadow-2xl animate-slide-up">
                     <h3 class="text-lg font-serif font-bold text-kyoto-wood mb-3">旅程設定</h3>
                     <div class="space-y-3 text-sm">
@@ -262,10 +279,9 @@
         </transition>
 
         <transition name="fade">
-            <div v-if="modals.item" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center sm:p-4" @click.self="closeItemModal">
+            <div v-if="modals.item" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center sm:p-4 screen-only" @click.self="closeItemModal">
                 <div class="bg-white w-full sm:max-w-xs rounded-t-2xl sm:rounded-xl p-5 shadow-2xl animate-slide-up pb-8 sm:pb-5">
                     <h3 class="text-lg font-serif font-bold text-kyoto-wood mb-3">{{ modalTitle }}</h3>
-                    
                     <div v-if="activeTab === 'schedule'" class="space-y-3 text-sm">
                         <div class="flex gap-3">
                             <input v-model="tempData.time" type="time" class="w-1/3 border-b border-gray-300 py-1.5 outline-none">
@@ -274,26 +290,21 @@
                         <input v-model="tempData.location" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="地點">
                         <textarea v-model="tempData.note" class="w-full border border-gray-300 rounded p-2 text-sm outline-none" rows="2" placeholder="備註 (支援網址連結)"></textarea>
                     </div>
-                    
                     <div v-if="activeTab === 'map'" class="space-y-3 text-sm">
                         <input v-model="tempData.name" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="地點名稱">
                         <input v-model="tempData.address" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="地址或備註">
                     </div>
-                    
                     <div v-if="activeTab === 'budget'" class="space-y-3 text-sm">
                         <input v-model="tempData.name" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="項目名稱">
                         <input v-model.number="tempData.amount" type="number" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="金額 (¥)">
                     </div>
-                    
                     <div v-if="activeTab === 'shopping'" class="space-y-3 text-sm">
                         <input v-model="tempData.name" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="物品名稱">
                         <input v-model="tempData.note" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="在哪買/備註">
                     </div>
-
                     <div v-if="activeTab === 'todo'" class="space-y-3 text-sm">
                         <input v-model="tempData.text" type="text" class="w-full border-b border-gray-300 py-1.5 outline-none" placeholder="待辦事項內容">
                     </div>
-
                     <div class="mt-5 flex justify-end gap-3">
                         <button v-if="isEditingItem" @click="deleteCurrentItem" class="text-red-400 mr-auto text-xs font-bold">刪除</button>
                         <button @click="saveItem" class="bg-kyoto-wood text-white px-5 py-1.5 rounded-lg text-sm font-bold">儲存</button>
@@ -303,12 +314,19 @@
         </transition>
 
         <transition name="fade">
-            <div v-if="showSettings" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" @click.self="showSettings = false">
+            <div v-if="showSettings" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 screen-only" @click.self="showSettings = false">
                 <div class="bg-white w-full max-w-xs rounded-xl p-5 shadow-2xl">
-                    <h3 class="text-lg font-bold text-kyoto-wood mb-4">資料備份</h3>
-                    <p class="text-xs text-gray-500 mb-4">資料目前自動存在此瀏覽器中。若要換裝置，請使用匯出功能。</p>
+                    <h3 class="text-lg font-bold text-kyoto-wood mb-4">功能設定</h3>
+                    
+                    <button v-if="activeTrip" @click="printPDF" class="w-full bg-kyoto-wood text-white py-2.5 rounded-lg text-sm font-bold mb-4 shadow-md flex items-center justify-center">
+                        <i class="fa-solid fa-file-pdf mr-2"></i>匯出行程 PDF
+                    </button>
+                    
+                    <hr class="border-gray-200 mb-4">
+                    <p class="text-xs text-gray-500 mb-2">資料備份 (JSON)</p>
+                    
                     <button @click="exportData" class="w-full bg-snow-blue text-kyoto-indigo py-2 rounded-lg text-sm font-bold mb-3">
-                        <i class="fa-solid fa-download mr-2"></i>匯出備份檔 (JSON)
+                        <i class="fa-solid fa-download mr-2"></i>匯出備份檔
                     </button>
                     <div class="relative">
                         <button class="w-full border border-gray-300 text-gray-600 py-2 rounded-lg text-sm font-bold">
@@ -384,16 +402,12 @@
             methods: {
                 getIcon(tab) { return { 'schedule': 'fa-solid fa-timeline', 'map': 'fa-regular fa-map', 'budget': 'fa-solid fa-yen-sign', 'shopping': 'fa-solid fa-bag-shopping', 'todo': 'fa-solid fa-clipboard-check' }[tab] },
                 getTabName(tab) { return { 'schedule': '行程', 'map': '地圖', 'budget': '記帳', 'shopping': '清單', 'todo': '待辦' }[tab] },
-                
-                // 超連結轉換
                 linkifyWithIcon(text) {
                     if (!text) return '';
                     const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-                    // 加入 onclick="event.stopPropagation()" 防止觸發編輯視窗
                     return '<i class="fa-regular fa-note-sticky mr-1 w-3 mt-1"></i>' + 
                            text.replace(urlPattern, '<a href="$1" target="_blank" class="text-blue-500 underline break-all relative z-20" onclick="event.stopPropagation()">$1</a>');
                 },
-
                 openTrip(trip) { 
                     this.activeTrip = trip; 
                     if(!this.activeTrip.todos) this.activeTrip.todos = [];
@@ -427,6 +441,11 @@
                         this.activeTrip.days.splice(this.currentDayIndex, 1);
                         if (this.currentDayIndex >= this.activeTrip.days.length) this.currentDayIndex = Math.max(0, this.activeTrip.days.length - 1);
                     }
+                },
+                // PDF Function
+                printPDF() {
+                    this.showSettings = false;
+                    setTimeout(() => window.print(), 300);
                 },
 
                 openTripModal(trip) { this.tempData = trip ? JSON.parse(JSON.stringify(trip)) : { id: Date.now(), name: '', location: '', dateRange: '', days: [{date: 'Day 1', schedule:[]}], places:[], expenses:[], shopping:[], todos:[] }; this.modals.trip = true; },
